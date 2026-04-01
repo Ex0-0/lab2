@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"simple-web-server/src/tracer"
+	"lab2/src/tracer"
 	"time"
 
 	"github.com/gorilla/websocket"
