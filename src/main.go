@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"simple-web-server/src/client"
-	"simple-web-server/src/tracer"
+	"lab2/src/client"
+	"lab2/src/tracer"
 	"sync"
 )
 
@@ -20,7 +20,7 @@ type TemplateHandler struct {
 
 func (t *TemplateHandler) ServeHTTP(writer http.ResponseWriter, req *http.Request) {
 	t.once.Do(func() {
-		t.template = template.Must(template.ParseFiles(filepath.Join("src", "templates", t.filename)))
+		t.template = template.Must(template.ParseFiles(filepath.Join("templates", t.filename)))
 	})
 
 	t.template.Execute(writer, req)
