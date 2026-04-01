@@ -1,4 +1,4 @@
-module simple-web-server
+module lab2
 
 go 1.25.1
 
