@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Чат | Simple Web Chat</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* Основной контейнер */
+        .chat-container {
+            width: 100%;
+            max-width: 1200px;
+            height: 90vh;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            display: flex;
+            overflow: hidden;
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Боковая панель */
+        .sidebar {
+            width: 300px;
+            background: #2c3e50;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            background: #1a2c3e;
+            text-align: center;
+        }
+
+        .sidebar-header h3 {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .online-count {
+            display: inline-block;
+            background: #27ae60;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .users-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+        }
+
+        .user-item {
+            padding: 10px;
+            margin-bottom: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.2s;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .user-item:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateX(5px);
+        }
+
+        .user-avatar {
+            width: 35px;
+            height: 35px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .user-name {
+            flex: 1;
+            font-size: 14px;
+        }
+
+        .user-status {
+            width: 8px;
+            height: 8px;
+            background: #27ae60;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+
+        /* Основная область чата */
+        .chat-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #f8f9fa;
+        }
+
+        /* Шапка чата */
+        .chat-header {
+            padding: 20px;
+            background: white;
+            border-bottom: 2px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .token-info {
+            font-size: 12px;
+            color: #6c757d;
+            cursor: pointer;
+            padding: 5px 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .token-info:hover {
+            background: #e9ecef;
+        }
+
+        /* Область сообщений */
+        .messages-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* Стили сообщений */
+        .message {
+            display: flex;
+            gap: 12px;
+            animation: fadeInSlide 0.3s ease-out;
+        }
+
+        @keyframes fadeInSlide {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .message-content {
+            flex: 1;
+        }
+
+        .message-header {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+            margin-bottom: 5px;
+        }
+
+        .message-name {
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 14px;
+        }
+
+        .message-time {
+            font-size: 11px;
+            color: #6c757d;
+        }
+
+        .message-text {
+            background: white;
+            padding: 10px 15px;
+            border-radius: 12px;
+            color: #2c3e50;
+            line-height: 1.5;
+            word-wrap: break-word;
+            display: inline-block;
+            max-width: 100%;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        /* Системные сообщения */
+        .system-message {
+            text-align: center;
+            margin: 10px 0;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .system-message span {
+            background: #e9ecef;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            color: #6c757d;
+            display: inline-block;
+        }
+
+        /* Область ввода */
+        .input-area {
+            padding: 20px;
+            background: white;
+            border-top: 2px solid #e9ecef;
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 15px;
+            align-items: flex-end;
+        }
+
+        .message-input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 14px;
+            resize: none;
+            transition: all 0.2s;
+        }
+
+        .message-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .send-button {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        .send-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .send-button:active {
+            transform: translateY(0);
+        }
+
+        .input-hint {
+            margin-top: 8px;
+            font-size: 11px;
+            color: #6c757d;
+            text-align: right;
+        }
+
+        /* Форма входа */
+        .login-container {
+            width: 100%;
+            max-width: 450px;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: slideUp 0.5s ease-out;
+        }
+
+        .login-container h2 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+        }
+
+        .login-form input {
+            width: 100%;
+            padding: 12px 15px;
+            margin-bottom: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .login-form input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .login-button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .login-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Скрытые элементы */
+        .hidden {
+            display: none;
+        }
+
+        /* Скроллбар */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+
+        /* Уведомление о копировании */
+        .toast-notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #2c3e50;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 10px;
+            animation: slideInRight 0.3s ease-out;
+            z-index: 1000;
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(100px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="login-container" class="login-container">
+        <h2>💬 Добро пожаловать в чат</h2>
+        <form id="login-form" class="login-form">
+            <input type="text" id="username" placeholder="Ваше имя" autocomplete="off" />
+            <input type="text" id="token" placeholder="Токен (опционально)" autocomplete="off" />
+            <button type="submit" class="login-button">Войти в чат</button>
+        </form>
+    </div>
+
+    <div id="chat-container" class="chat-container hidden">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h3>👥 Участники чата</h3>
+                <span id="online-count" class="online-count">0 онлайн</span>
+            </div>
+            <div id="users-list" class="users-list">
+                <!-- Список пользователей будет здесь -->
+            </div>
+        </div>
+
+        <div class="chat-main">
+            <div class="chat-header">
+                <div class="chat-title">💬 Общий чат</div>
+                <div id="token-info" class="token-info" onclick="copyToken()">
+                    🔑 Показать токен
+                </div>
+            </div>
+
+            <div id="messages-area" class="messages-area">
+                <!-- Сообщения будут здесь -->
+            </div>
+
+            <div class="input-area">
+                <div class="input-wrapper">
+                    <textarea id="message-input" class="message-input" placeholder="Введите сообщение..." rows="2"></textarea>
+                    <button id="send-button" class="send-button">Отправить</button>
+                </div>
+                <div class="input-hint">
+                    💡 Enter для отправки • Shift+Enter для новой строки
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script>
+        var socket = null;
+        var currentToken = null;
+        var currentUsername = null;
+        var users = new Map(); // Храним пользователей
+
+        // Функция для отображения уведомления
+        function showToast(message) {
+            var toast = $('<div class="toast-notification">' + message + '</div>');
+            $('body').append(toast);
+            setTimeout(function() {
+                toast.fadeOut(300, function() {
+                    $(this).remove();
+                });
+            }, 2000);
+        }
+
+        // Копирование токена
+        function copyToken() {
+            if (currentToken) {
+                navigator.clipboard.writeText(currentToken).then(function() {
+                    showToast('✅ Токен скопирован в буфер обмена');
+                }).catch(function() {
+                    showToast('❌ Не удалось скопировать токен');
+                });
+            }
+        }
+
+        // Форматирование времени
+        function formatTime() {
+            var now = new Date();
+            return now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        // Добавление системного сообщения
+        function addSystemMessage(text) {
+            var messageHtml = `
+                <div class="system-message">
+                    <span>🔔 ${text}</span>
+                </div>
+            `;
+            $('#messages-area').append(messageHtml);
+            scrollToBottom();
+        }
+
+        // Добавление сообщения
+        function addMessage(data) {
+            var messageHtml = `
+                <div class="message">
+                    <div class="message-avatar" style="background: linear-gradient(135deg, ${getAvatarColor(data.name)} 0%, ${getAvatarColor(data.name, true)} 100%);">
+                        ${data.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div class="message-content">
+                        <div class="message-header">
+                            <span class="message-name">${escapeHtml(data.name)}</span>
+                            <span class="message-time">${data.time || formatTime()}</span>
+                        </div>
+                        <div class="message-text">${escapeHtml(data.text)}</div>
+                    </div>
+                </div>
+            `;
+            $('#messages-area').append(messageHtml);
+            scrollToBottom();
+        }
+
+        // Генерация цвета аватара
+        function getAvatarColor(name, isSecond = false) {
+            var colors = [
+                ['#667eea', '#764ba2'],
+                ['#f093fb', '#f5576c'],
+                ['#4facfe', '#00f2fe'],
+                ['#43e97b', '#38f9d7'],
+                ['#fa709a', '#fee140'],
+                ['#30cfd0', '#330867']
+            ];
+            var index = name.length % colors.length;
+            return isSecond ? colors[index][1] : colors[index][0];
+        }
+
+        // Обновление списка пользователей
+        function updateUsersList() {
+            var usersHtml = '';
+            users.forEach(function(username) {
+                usersHtml += `
+                    <div class="user-item">
+                        <div class="user-avatar" style="background: linear-gradient(135deg, ${getAvatarColor(username)} 0%, ${getAvatarColor(username, true)} 100%);">
+                            ${username.charAt(0).toUpperCase()}
+                        </div>
+                        <div class="user-name">${escapeHtml(username)}</div>
+                        <div class="user-status"></div>
+                    </div>
+                `;
+            });
+            $('#users-list').html(usersHtml);
+            $('#online-count').text(users.size + ' онлайн');
+        }
+
+        // Добавление пользователя
+        function addUser(username) {
+            if (!users.has(username)) {
+                users.set(username, username);
+                updateUsersList();
+                addSystemMessage(`${username} присоединился к чату`);
+            }
+        }
+
+        // Удаление пользователя
+        function removeUser(username) {
+            if (users.has(username)) {
+                users.delete(username);
+                updateUsersList();
+                addSystemMessage(`${username} покинул чат`);
+            }
+        }
+
+        // Прокрутка вниз
+        function scrollToBottom() {
+            var messagesArea = document.getElementById('messages-area');
+            messagesArea.scrollTop = messagesArea.scrollHeight;
+        }
+
+        // Экранирование HTML
+        function escapeHtml(text) {
+            var map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+        }
+
+        // Подключение к чату
+        function connect(username, token) {
+            var wsUrl = "ws://" + window.location.host + "/room?name=" + encodeURIComponent(username);
+            if (token) {
+                wsUrl += "&token=" + encodeURIComponent(token);
+            }
+
+            socket = new WebSocket(wsUrl);
+
+            socket.onopen = function() {
+                currentUsername = username;
+                $('#login-container').addClass('hidden');
+                $('#chat-container').removeClass('hidden');
+                $('#message-input').focus();
+                addSystemMessage('Вы подключились к чату');
+            };
+
+            socket.onclose = function() {
+                if (!$('#login-container').hasClass('hidden')) {
+                    return;
+                }
+                $('#login-container').removeClass('hidden');
+                $('#chat-container').addClass('hidden');
+                users.clear();
+                showToast('❌ Соединение потеряно');
+                addSystemMessage('Соединение потеряно');
+            };
+
+            socket.onerror = function() {
+                showToast('❌ Ошибка соединения');
+            };
+
+            socket.onmessage = function(e) {
+                var message = e.data;
+                
+                // Проверяем токен
+                if (message.startsWith("=== Ваш токен:")) {
+                    var tokenMatch = message.match(/=== Ваш токен: (.+) ===/);
+                    if (tokenMatch) {
+                        currentToken = tokenMatch[1];
+                        $('#token-info').html('🔑 Токен скопирован');
+                        setTimeout(function() {
+                            $('#token-info').html('🔑 Показать токен');
+                        }, 2000);
+                        showToast('✅ Ваш токен получен. Нажмите на 🔑 чтобы скопировать');
+                    }
+                } 
+                // Обычное сообщение
+                else if (message.includes(':')) {
+                    var parts = message.split(': ');
+                    var userName = parts[0];
+                    var messageText = parts.slice(1).join(': ');
+                    
+                    // Добавляем пользователя в список
+                    addUser(userName);
+                    
+                    // Добавляем сообщение
+                    addMessage({
+                        name: userName,
+                        text: messageText,
+                        time: formatTime()
+                    });
+                }
+            };
+        }
+
+        // Обработка формы входа
+        $('#login-form').submit(function(e) {
+            e.preventDefault();
+            var username = $('#username').val().trim();
+            var token = $('#token').val().trim();
+
+            if (!username) {
+                showToast('❌ Пожалуйста, введите имя');
+                $('#username').focus();
+                return;
+            }
+
+            if (username.length > 20) {
+                showToast('❌ Имя не может быть длиннее 20 символов');
+                return;
+            }
+
+            connect(username, token);
+        });
+
+        // Отправка сообщения
+        function sendMessage() {
+            var msgBox = $('#message-input');
+            var message = msgBox.val().trim();
+            
+            if (!message) return false;
+            
+            if (!socket || socket.readyState !== WebSocket.OPEN) {
+                showToast('❌ Нет соединения с сервером');
+                return false;
+            }
+            
+            socket.send(message);
+            msgBox.val('');
+            return false;
+        }
+
+        // Обработка отправки сообщения
+        $('#send-button').click(sendMessage);
+        
+        $('#message-input').keydown(function(e) {
+            if (e.keyCode === 13 && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // Фокус на поле ввода при клике на область чата
+        $('#chat-container').click(function(e) {
+            if (!$(e.target).is('textarea, button')) {
+                $('#message-input').focus();
+            }
+        });
+
+        // Очистка сообщений при входе
+        $(document).ready(function() {
+            $('#username').focus();
+        });
+    </script>
+</body>
+</html>
